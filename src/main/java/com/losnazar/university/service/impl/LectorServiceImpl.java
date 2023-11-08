@@ -1,6 +1,5 @@
 package com.losnazar.university.service.impl;
 
-import com.losnazar.university.exception.DataProcessingException;
 import com.losnazar.university.model.Lector;
 import com.losnazar.university.repository.LectorRepositoryJpa;
 import com.losnazar.university.service.LectorService;
