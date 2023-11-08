@@ -1,0 +1,54 @@
+services:
+  postgres:
+    container_name: postgres
+    image: postgres
+    environment:
+      POSTGRES_USER: losnazar
+      POSTGRES_PASSWORD: password
+      PGDATA: /data/postgres
+    volumes:
+      - postgres:/data/postgres
+    ports:
+      - "5433:5432"
+    networks:
+      - postgres
+    restart: unless-stopped
+  pgadmin:
+    container_name: pgadmin
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-pgadmin4@pgadmin.org}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    volumes:
+      - pgadmin:/var/lib/pgadmin
+    ports:
+      - "5050:80"
+    networks:
+      - postgres
+    restart: unless-stopped
+  app:
+    depends_on:
+      - postgres
+    image: losnazar/university
+    build: .
+    env_file: ./.env
+    ports:
+      - $SPRING_LOCAL_PORT:$SPRING_DOCKER_PORT
+    environment:
+      SPRING_APPLICATION_JSON: '{
+      "spring.datasource.url"   :   "jdbc:postgresql://postgres:$POSTGRES_DOCKER_PORT/POSTGRES_DATABASE?createDatabaseIfNotExist=true&autoReconnect=true&&autoReconnect=true&failOverReadOnly=false&maxReconnects=10",
+      "spring.datasource.username"    :   "$POSTGRES_USER",
+      "spring.datasource.password"    :   "$POSTGRES_PASSWORD", 
+      "spring.jpa.properties.hibernate.dialect"    :    "org.hibernate.dialect.PostgreSQLDialect",
+      "spring.jpa.hibernate.ddl-auto=validate"    :   "validate",
+      "spring.liquibase.change-log"    :    "classpath:db/changelog/db.changelog-master.yaml"
+      }'
+
+networks:
+  postgres:
+    driver: bridge
+
+volumes:
+  postgres:
+  pgadmin:
